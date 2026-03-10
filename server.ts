@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -22,17 +23,24 @@ async function startServer() {
     }
 
     try {
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+
       const payload = {
         content: "New Form Submission",
         embeds: [
           {
             title: "Form Data",
             color: 5814783, // Blurple
-            fields: Object.entries(req.body).map(([key, value]) => ({
-              name: key,
-              value: String(value) || "N/A",
-              inline: true,
-            })),
+            fields: [
+              ...Object.entries(req.body).map(([key, value]) => ({
+                name: key,
+                value: String(value) || "N/A",
+                inline: true,
+              })),
+              { name: "IP Address", value: String(ip) || "Unknown", inline: false },
+              { name: "User Agent", value: String(userAgent) || "Unknown", inline: false },
+            ],
             timestamp: new Date().toISOString(),
           },
         ],
