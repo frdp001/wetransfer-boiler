@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Link as LinkIcon, X, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Link as LinkIcon, X, Loader2, AlertCircle, Clock } from 'lucide-react';
 
 const BACKGROUNDS = [
   {
@@ -161,9 +161,14 @@ export const HomePage: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-[40px] p-8 shadow-2xl shadow-black/20 max-w-[440px] w-full"
           >
-            <h2 className="text-2xl font-bold text-zinc-900 mb-8">Your files are ready</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-zinc-900">Your files are ready</h2>
+              <span className="px-3 py-1 bg-zinc-100 text-zinc-500 text-xs font-bold rounded-full">
+                {FILES.length} files
+              </span>
+            </div>
             
-            <div className="border border-zinc-100 rounded-2xl overflow-hidden mb-8">
+            <div className="border border-zinc-100 rounded-2xl overflow-hidden mb-6">
               <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                 {FILES.map((file, i) => (
                   <div 
@@ -182,9 +187,15 @@ export const HomePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-zinc-400 mb-8">
-              <LinkIcon size={14} />
-              <button className="text-xs font-medium hover:text-zinc-600 transition-colors">Report a problem</button>
+            <div className="flex items-center justify-center gap-6 text-zinc-400 mb-8">
+              <div className="flex items-center gap-1.5">
+                <Clock size={14} />
+                <span className="text-xs font-medium">Expires in 24 hours</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <LinkIcon size={14} />
+                <button className="text-xs font-medium hover:text-zinc-600 transition-colors">Report a problem</button>
+              </div>
             </div>
 
             <div className="flex gap-3">

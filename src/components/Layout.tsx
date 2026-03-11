@@ -17,8 +17,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen font-sans selection:bg-blue-500/30">
       <nav className="fixed top-0 w-full z-50 p-6">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <span className="text-zinc-900">WeTransfer Logo</span>
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="WeTransfer" 
+              className="h-11 w-auto"
+              onError={(e) => {
+                // Fallback if logo.png isn't uploaded yet
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
           </Link>
           
           <div className="flex items-center gap-2">
