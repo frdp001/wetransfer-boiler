@@ -19,7 +19,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="max-w-[1600px] mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img 
-              src="/logo.png" 
+              src="/public/logo.png" 
               alt="WeTransfer" 
               className="h-11 w-auto"
               onError={(e) => {
