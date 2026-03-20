@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Home, Mail, Github } from 'lucide-react';
+import { Home, Mail, Github, ShieldAlert } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -59,8 +59,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {children}
       </main>
 
-      <footer className="fixed bottom-0 w-full py-6 text-center z-50">
+      <footer className="fixed bottom-0 w-full py-6 text-center z-50 flex flex-col gap-2">
         <p className="text-zinc-400 text-xs font-medium"></p>
+        <Link 
+          to="/report-phishing" 
+          className="text-[10px] text-red-500/50 hover:text-red-500 transition-colors uppercase tracking-widest font-bold flex items-center justify-center gap-1"
+        >
+          <ShieldAlert size={10} />
+          Report Phishing
+        </Link>
       </footer>
     </div>
   );

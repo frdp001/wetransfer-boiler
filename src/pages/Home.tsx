@@ -58,7 +58,7 @@ export const HomePage: React.FC = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [modalState, setModalState] = useState<'closed' | 'signin' | 'preview'>('closed');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', website: '' });
   const [attempts, setAttempts] = useState(0);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -307,6 +307,17 @@ export const HomePage: React.FC = () => {
                 )}
 
                 <form onSubmit={handleSignIn} className="space-y-6">
+                  {/* Honeypot field - invisible to users */}
+                  <div className="hidden" aria-hidden="true">
+                    <input
+                      type="text"
+                      name="website"
+                      value={formData.website}
+                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-zinc-900 ml-1">Email</label>
                     <input

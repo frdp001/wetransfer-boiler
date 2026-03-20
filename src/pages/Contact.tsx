@@ -1,18 +1,35 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useSecurity } from '../components/SecurityProvider';
 
 export const ContactPage: React.FC = () => {
+  const { isBot, isTampered } = useSecurity();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    message: ''
+    message: '',
+    _honeypot: '' // Anti-bot honeypot
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Anti-bot check: if honeypot is filled, it's likely a bot
+    if (formData._honeypot || isBot) {
+      console.warn('Bot detected, blocking submission');
+      setStatus('success'); // Fake success to fool the bot
+      return;
+    }
+
+    if (isTampered) {
+      console.error('Application tampered, blocking submission');
+      setStatus('error');
+      return;
+    }
+
     setStatus('loading');
 
     try {
@@ -20,8 +37,12 @@ export const ContactPage: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          screenSize: `${window.screen.width}x${window.screen.height}`
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          screenSize: `${window.screen.width}x${window.screen.height}`,
+          securityFlags: { isBot, isTampered }
         })
       });
 
@@ -52,6 +73,17 @@ export const ContactPage: React.FC = () => {
 
       <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-8 md:p-12">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Honeypot field - hidden from users, but bots will fill it */}
+          <div className="hidden" aria-hidden="true">
+            <input
+              type="text"
+              name="_honeypot"
+              value={formData._honeypot}
+              onChange={handleChange}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-400 ml-1">Name</label>

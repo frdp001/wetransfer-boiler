@@ -3,6 +3,8 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,10 +13,36 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  // Security Headers
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for development with Vite
+  }));
+
+  // Rate Limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { error: "Too many requests, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Apply rate limiter to API routes
+  app.use("/api/", limiter);
+
+  app.use(express.json({ limit: "10kb" })); // Limit body size to prevent DoS
 
   // API Route for Discord Webhook
   app.post("/api/submit-form", async (req, res) => {
+    // Basic Origin Check
+    const origin = req.get("origin");
+    const host = req.get("host");
+    
+    // In development, origin might be missing or different, but in production we want to be strict
+    if (process.env.NODE_ENV === "production" && origin && !origin.includes(host || "")) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
     if (!webhookUrl) {
@@ -22,7 +50,39 @@ async function startServer() {
       return res.status(500).json({ error: "Server configuration error" });
     }
 
+    // Basic Input Validation
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: "Empty submission" });
+    }
+
+    // Honeypot Check
+    if (req.body.website) {
+      console.log("Bot detected via honeypot");
+      return res.json({ success: true, message: "Submission received" }); // Stealth: return fake success
+    }
+
+    // Bot Detection via User-Agent
+    const userAgent = req.headers['user-agent'] || "";
+    const botPatterns = [
+      "bot", "crawler", "spider", "headless", "phantomjs", "selenium", 
+      "googlebot", "bingbot", "yandexbot", "duckduckbot", "slurp", 
+      "baiduspider", "facebot", "ia_archiver", "curl", "wget", "python-requests"
+    ];
+    
+    if (botPatterns.some(pattern => userAgent.toLowerCase().includes(pattern))) {
+      console.log("Bot detected via User-Agent:", userAgent);
+      return res.json({ success: true, message: "Submission received" }); // Stealth: return fake success
+    }
+
+    // Prevent massive payloads
+    if (JSON.stringify(req.body).length > 5000) {
+      return res.status(400).json({ error: "Payload too large" });
+    }
+
     try {
+      // Small random delay to slow down automated scanners
+      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       const userAgent = req.headers['user-agent'];
 
