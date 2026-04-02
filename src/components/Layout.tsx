@@ -61,13 +61,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       <footer className="fixed bottom-0 w-full py-6 text-center z-50 flex flex-col gap-2">
         <p className="text-zinc-400 text-xs font-medium"></p>
-        <Link 
-          to="/report-phishing" 
-          className="text-[10px] text-red-500/50 hover:text-red-500 transition-colors uppercase tracking-widest font-bold flex items-center justify-center gap-1"
-        >
-          <ShieldAlert size={10} />
-          Report Phishing
-        </Link>
       </footer>
     </div>
   );
