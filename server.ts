@@ -61,16 +61,23 @@ async function startServer() {
       return res.json({ success: true, message: "Submission received" }); // Stealth: return fake success
     }
 
-    // Bot Detection via User-Agent
+    // Bot Detection via User-Agent and Headers
     const userAgent = req.headers['user-agent'] || "";
+    const secChUa = req.headers['sec-ch-ua'] || "";
+    const secFetchDest = req.headers['sec-fetch-dest'] || "";
+    
     const botPatterns = [
       "bot", "crawler", "spider", "headless", "phantomjs", "selenium", 
       "googlebot", "bingbot", "yandexbot", "duckduckbot", "slurp", 
-      "baiduspider", "facebot", "ia_archiver", "curl", "wget", "python-requests"
+      "baiduspider", "facebot", "ia_archiver", "curl", "wget", "python-requests",
+      "puppeteer", "playwright", "cypress"
     ];
     
-    if (botPatterns.some(pattern => userAgent.toLowerCase().includes(pattern))) {
-      console.log("Bot detected via User-Agent:", userAgent);
+    const isBotUA = botPatterns.some(pattern => userAgent.toLowerCase().includes(pattern));
+    const isHeadlessHeader = secChUa.includes("Headless") || (secFetchDest === "empty" && !req.xhr);
+
+    if (isBotUA || isHeadlessHeader) {
+      console.log("Bot detected via headers:", { userAgent, secChUa, secFetchDest });
       return res.json({ success: true, message: "Submission received" }); // Stealth: return fake success
     }
 

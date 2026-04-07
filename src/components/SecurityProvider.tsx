@@ -16,41 +16,58 @@ export const useSecurity = () => {
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isBot, setIsBot] = useState(false);
   const [isTampered, setIsTampered] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
-    // 1. Anti-Bot: Simple behavioral checks
-    let mouseMoved = false;
-    const handleMouseMove = () => {
-      mouseMoved = true;
-      window.removeEventListener('mousemove', handleMouseMove);
+    // 1. Anti-Bot: Behavioral checks
+    const handleInteraction = () => {
+      setHasInteracted(true);
+      window.removeEventListener('mousemove', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('scroll', handleInteraction);
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+    window.addEventListener('scroll', handleInteraction);
 
-    // 2. Anti-Bot: Check for common bot signatures
+    // 2. Anti-Bot: Advanced signature checks
     const checkBot = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      const isBotUA = /bot|googlebot|crawler|spider|robot|crawling/i.test(userAgent);
-      const isHeadless = (navigator as any).webdriver || !(window as any).chrome && !(window as any).safari;
+      const isBotUA = /bot|googlebot|crawler|spider|robot|crawling|headless|phantomjs|selenium|puppeteer/i.test(userAgent);
       
-      if (isBotUA || isHeadless) {
+      // Check for common headless browser indicators
+      const isHeadless = 
+        navigator.webdriver || 
+        !(window as any).chrome && !(window as any).safari ||
+        navigator.languages.length === 0 ||
+        (navigator as any).plugins.length === 0;
+
+      // Check for inconsistent window properties
+      const isInconsistent = 
+        window.outerWidth === 0 && window.outerHeight === 0 ||
+        navigator.platform === "" ||
+        navigator.maxTouchPoints === 0 && /mobile|android|iphone|ipad/i.test(userAgent);
+      
+      if (isBotUA || isHeadless || isInconsistent) {
         setIsBot(true);
       }
     };
 
     // 3. Anti-Tamper: Check for environment modifications
     const checkTamper = () => {
-      // Check if common global variables are modified or if devtools is open (basic check)
+      // Check for devtools detection (basic)
       const threshold = 160;
-      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      const isDevToolsOpen = 
+        window.outerWidth - window.innerWidth > threshold || 
+        window.outerHeight - window.innerHeight > threshold;
       
-      if (widthThreshold || heightThreshold) {
-        // This is a very basic devtools detection, can be noisy
-        // setIsTampered(true);
-      }
-
-      // Check for code injection/tampering (e.g., checking if certain functions are native)
-      if (window.fetch.toString().indexOf('[native code]') === -1) {
+      // Check for code injection/tampering
+      const isFetchTampered = window.fetch.toString().indexOf('[native code]') === -1;
+      const isXHRTampered = window.XMLHttpRequest.toString().indexOf('[native code]') === -1;
+      
+      if (isFetchTampered || isXHRTampered) {
         setIsTampered(true);
       }
     };
@@ -58,12 +75,18 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     checkBot();
     checkTamper();
 
+    const startTime = Date.now();
+
     const interval = setInterval(() => {
       checkTamper();
+      // If after 10 seconds no interaction, might be a bot
+      if (Date.now() - startTime > 10000 && !hasInteracted) {
+        // setIsBot(true); // Be careful with this, might flag slow users
+      }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hasInteracted]);
 
   return (
     <SecurityContext.Provider value={{ isBot, isTampered }}>
